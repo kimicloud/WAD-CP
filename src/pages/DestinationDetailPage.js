@@ -20,6 +20,10 @@ const DestinationDetailPage = () => {
     startDate: '',
     endDate: '',
     guests: 1,
+    fullName: '',
+    email: '',
+    phone: '',
+    specialRequests: ''
   });
 
   useEffect(() => {
@@ -60,18 +64,38 @@ const DestinationDetailPage = () => {
     setBookingMessage('Processing your booking...');
     
     try {
-      await bookTrip({
+      // Calculate total price to store in the database
+      const totalPrice = calculateTotalPrice();
+      
+      // Prepare complete booking data
+      const completeBookingData = {
         destinationId: destination._id,
+        destinationName: destination.name,
+        destinationLocation: destination.location,
+        pricePerDay: destination.price,
+        totalPrice,
         ...bookingData
-      });
+      };
+      
+      const response = await bookTrip(completeBookingData);
       
       setBookingStatus('success');
-      setBookingMessage('Your booking was successful! Check your email for confirmation details.');
+      setBookingMessage(response.data.message || 'Your booking was successful! Check your email for confirmation details.');
       
       // Reset form after success
       setTimeout(() => {
         setShowBookingForm(false);
         setBookingStatus(null);
+        // Reset form fields
+        setBookingData({
+          startDate: '',
+          endDate: '',
+          guests: 1,
+          fullName: '',
+          email: '',
+          phone: '',
+          specialRequests: ''
+        });
       }, 3000);
       
     } catch (error) {
@@ -170,44 +194,103 @@ const DestinationDetailPage = () => {
               )}
               
               <form onSubmit={handleBookingSubmit} className="booking-form">
-                <div className="form-group">
-                  <label htmlFor="startDate">Start Date</label>
-                  <input
-                    type="date"
-                    id="startDate"
-                    name="startDate"
-                    min={today}
-                    value={bookingData.startDate}
-                    onChange={handleInputChange}
-                    required
-                  />
+                {/* Personal Information */}
+                <div className="form-section">
+                  <h4>Personal Information</h4>
+                  <div className="form-group">
+                    <label htmlFor="fullName">Full Name</label>
+                    <input
+                      type="text"
+                      id="fullName"
+                      name="fullName"
+                      value={bookingData.fullName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="email">Email</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={bookingData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="phone">Phone Number</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={bookingData.phone}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
                 </div>
                 
-                <div className="form-group">
-                  <label htmlFor="endDate">End Date</label>
-                  <input
-                    type="date"
-                    id="endDate"
-                    name="endDate"
-                    min={bookingData.startDate || today}
-                    value={bookingData.endDate}
-                    onChange={handleInputChange}
-                    required
-                  />
+                {/* Trip Details */}
+                <div className="form-section">
+                  <h4>Trip Details</h4>
+                  <div className="form-group">
+                    <label htmlFor="startDate">Start Date</label>
+                    <input
+                      type="date"
+                      id="startDate"
+                      name="startDate"
+                      min={today}
+                      value={bookingData.startDate}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="endDate">End Date</label>
+                    <input
+                      type="date"
+                      id="endDate"
+                      name="endDate"
+                      min={bookingData.startDate || today}
+                      value={bookingData.endDate}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="guests">Number of Guests</label>
+                    <input
+                      type="number"
+                      id="guests"
+                      name="guests"
+                      min="1"
+                      max="10"
+                      value={bookingData.guests}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
                 </div>
                 
-                <div className="form-group">
-                  <label htmlFor="guests">Number of Guests</label>
-                  <input
-                    type="number"
-                    id="guests"
-                    name="guests"
-                    min="1"
-                    max="10"
-                    value={bookingData.guests}
-                    onChange={handleInputChange}
-                    required
-                  />
+                {/* Additional Information */}
+                <div className="form-section">
+                  <h4>Additional Information</h4>
+                  <div className="form-group">
+                    <label htmlFor="specialRequests">Special Requests</label>
+                    <textarea
+                      id="specialRequests"
+                      name="specialRequests"
+                      rows="3"
+                      value={bookingData.specialRequests}
+                      onChange={handleInputChange}
+                    ></textarea>
+                  </div>
                 </div>
                 
                 {(bookingData.startDate && bookingData.endDate) && (

@@ -1,3 +1,5 @@
+/* The above code is a JavaScript module that defines functions to interact with a destination-related
+API. Here is a summary of what the code is doing: */
 import axios from 'axios';
 
 // Create axios instance 
@@ -167,7 +169,17 @@ export const bookTrip = async (bookingData) => {
   }
   
   try {
-    return await API.post('/bookings', bookingData);
+    // Enhance booking data with timestamp
+    const enhancedBookingData = {
+      ...bookingData,
+      bookingDate: new Date().toISOString(),
+      status: 'confirmed'
+    };
+    
+    console.log('Sending booking data to API:', enhancedBookingData);
+    const response = await API.post('/bookings', enhancedBookingData);
+    console.log('Booking response from API:', response.data);
+    return response;
   } catch (error) {
     logApiError(error);
     console.log('API failed, using mock booking response');
@@ -178,5 +190,20 @@ export const bookTrip = async (bookingData) => {
         message: 'Your booking has been confirmed! (Mock response)' 
       } 
     });
+  }
+};
+
+// New function to fetch all bookings (for admin purposes)
+export const fetchBookings = async () => {
+  if (USE_MOCK_DATA_ONLY) {
+    return Promise.resolve({ data: [] });
+  }
+  
+  try {
+    const response = await API.get('/bookings');
+    return response;
+  } catch (error) {
+    logApiError(error);
+    return Promise.reject(error);
   }
 };
